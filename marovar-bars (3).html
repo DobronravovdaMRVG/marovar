@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>МАРОВАР — Где попробовать</title>
+  <style>
+    :root {
+      --red: #C41E3A;
+      --red-dark: #9B1B2E;
+      --cream: #FDF8F5;
+      --text: #1a1a1a;
+      --muted: #666;
+      --border: #eadfd9;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--cream);
+      color: var(--text);
+      line-height: 1.45;
+    }
+    header {
+      background: var(--red);
+      color: #fff;
+      padding: 18px 20px;
+      text-align: center;
+    }
+    .logo { font-size: 26px; font-weight: 700; letter-spacing: 2px; }
+    .tag { margin-top: 4px; font-size: 13px; opacity: 0.9; }
+    .map-banner {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 12px 16px 0;
+    }
+    .map-banner img {
+      width: 100%;
+      height: auto;
+      border-radius: 12px;
+      display: block;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+    .wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 16px;
+      position: sticky;
+      top: 0;
+      background: var(--cream);
+      padding: 12px 0;
+      z-index: 10;
+    }
+    input, select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 15px;
+      background: #fff;
+      outline: none;
+    }
+    input:focus, select:focus { border-color: var(--red); }
+    .count { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+    .card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+    }
+    .name { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
+    .addr { font-size: 14px; color: var(--muted); margin-bottom: 4px; }
+    .meta { font-size: 12px; color: var(--red); margin-bottom: 8px; }
+    .links a {
+      font-size: 13px;
+      color: var(--red);
+      text-decoration: none;
+      margin-right: 14px;
+    }
+    .links a:hover { text-decoration: underline; }
+    .empty { text-align: center; padding: 40px 20px; color: var(--muted); }
+    footer { text-align: center; padding: 20px; font-size: 12px; color: var(--muted); }
+    .group-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--red);
+      margin: 18px 0 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">◆ ◆ ◆  МАРОВАР</div>
+    <div class="tag">Своё пиво. Свои люди. Свои места.</div>
+  </header>
+
+  <div class="map-banner">
+    <img src="map.jpg" alt="Карта точек МАРОВАР" onerror="this.style.display='none'" />
+  </div>
+
+  <div class="wrap">
+    <div class="controls">
+      <input id="search" type="search" placeholder="Поиск: название, адрес или район..." />
+      <select id="city"><option value="">Все города</option></select>
+      <select id="district"><option value="">Все районы</option></select>
+    </div>
+    <div class="count" id="count"></div>
+    <div id="list"></div>
+  </div>
+
+  <footer>МАРОВАР · Где попробовать наше пиво</footer>
+
+  <script>
+    const places = [
+      { name: "Бар Стирка", address: "Казанская ул., 26", city: "Санкт-Петербург", district: "Адмиралтейский" },
+      { name: "TAP 22", address: "Вознесенский пр., 39", city: "Санкт-Петербург", district: "Адмиралтейский" },
+      { name: "Кантина Хопс", address: "наб. реки Фонтанки, 55", city: "Санкт-Петербург", district: "Адмиралтейский" },
+      { name: "BeerMug", address: "Садовая ул., 27", city: "Санкт-Петербург", district: "Адмиралтейский" },
+      { name: "Рыба Пила", address: "Римского-Корсакова, 57", city: "Санкт-Петербург", district: "Адмиралтейский" },
+      { name: "С Пеной у Рта", address: "ул. Ивана Черных, 2/2", city: "Санкт-Петербург", district: "Адмиралтейский" },
+      { name: "Пивное Заведение", address: "Старо-Петергофский пр., 52", city: "Санкт-Петербург", district: "Адмиралтейский" },
+      { name: "OnTap", address: "Большой пр. В.О., 16/14Б", city: "Санкт-Петербург", district: "Василеостровский" },
+      { name: "Бар Бардак / Poryadok", address: "ул. Гжатская, 22к1", city: "Санкт-Петербург", district: "Выборгский" },
+      { name: "ГлавПиво", address: "пр. Науки, 19", city: "Санкт-Петербург", district: "Выборгский" },
+      { name: "Свежего Глоток", address: "пр. Маршала Блюхера, 12", city: "Санкт-Петербург", district: "Выборгский" },
+      { name: "Craft Beer Shop", address: "Московский пр., 1", city: "Санкт-Петербург", district: "Выборгский" },
+      { name: "Crime Beer", address: "ул. Архитектора Белова, 2к6", city: "Санкт-Петербург", district: "Выборгский" },
+      { name: "ГлавПиво", address: "ул. Сикейроса, 4", city: "Санкт-Петербург", district: "Выборгский" },
+      { name: "Пиво на Ушинке", address: "ул. Ушинского, 25к1", city: "Санкт-Петербург", district: "Калининский" },
+      { name: "Пивная Стачка", address: "пр. Стачек, 6", city: "Санкт-Петербург", district: "Кировский" },
+      { name: "No Pub", address: "ул. Адмирала Трибуца, 8", city: "Санкт-Петербург", district: "Красносельский" },
+      { name: "Beer&Ko", address: "Среднерогатская ул., 13к2", city: "Санкт-Петербург", district: "Московский" },
+      { name: "Уголок Потребителя", address: "Среднерогатская ул., 14/1", city: "Санкт-Петербург", district: "Московский" },
+      { name: "ЧПХ", address: "Московский пр., 197", city: "Санкт-Петербург", district: "Московский" },
+      { name: "Ещё по Одной", address: "Авиационная ул., 18", city: "Санкт-Петербург", district: "Московский" },
+      { name: "Другая Шаверма", address: "ул. Решетникова, 3", city: "Санкт-Петербург", district: "Московский" },
+      { name: "Мясная Диета", address: "ул. Ярослава Гашека, 11Б", city: "Санкт-Петербург", district: "Московский" },
+      { name: "Live Beer", address: "Архивная ул., 11к1", city: "Санкт-Петербург", district: "Невский" },
+      { name: "Live Beer", address: "Рябовское ш., 119к6", city: "Санкт-Петербург", district: "Невский" },
+      { name: "Beer Fabrique", address: "ул. Коллонтай, 6к1", city: "Санкт-Петербург", district: "Невский" },
+      { name: "Хмель Пивной Маркет", address: "ул. Дыбенко, 5к1", city: "Санкт-Петербург", district: "Невский" },
+      { name: "Crow Bar", address: "Ропшинская ул., 19/40", city: "Санкт-Петербург", district: "Петроградский" },
+      { name: "Beer Garden", address: "ул. Академика Крылова, 4", city: "Санкт-Петербург", district: "Петроградский" },
+      { name: "Eight Balls", address: "Барочная ул., 2", city: "Санкт-Петербург", district: "Петроградский" },
+      { name: "KIKS", address: "Каменноостровский пр., 26–28", city: "Санкт-Петербург", district: "Петроградский" },
+      { name: "Патрикки Паб", address: "ул. Куйбышева, 33/8", city: "Санкт-Петербург", district: "Петроградский" },
+      { name: "Lestr Bar", address: "ул. Ленина, 25", city: "Санкт-Петербург", district: "Петроградский" },
+      { name: "Синий Гендальф", address: "Фурштатская ул., 20", city: "Санкт-Петербург", district: "Петроградский" },
+      { name: "BrewMasters", address: "Байконурская ул., 26", city: "Санкт-Петербург", district: "Приморский" },
+      { name: "BeerGrad", address: "Комендантский пр., 34к1", city: "Санкт-Петербург", district: "Приморский" },
+      { name: "Браус", address: "ул. Туристская, 20к2", city: "Санкт-Петербург", district: "Приморский" },
+      { name: "Браус", address: "ул. Королёва, 57к1", city: "Санкт-Петербург", district: "Приморский" },
+      { name: "Бар Конструктор", address: "пр. Авиаконструкторов, 63к1", city: "Санкт-Петербург", district: "Приморский" },
+      { name: "Пиво Рыба", address: "ул. Савушкина, 124к1", city: "Санкт-Петербург", district: "Приморский" },
+      { name: "Пиво Рыба Rock'N'Roll", address: "ул. Уточкина, 6к1", city: "Санкт-Петербург", district: "Приморский" },
+      { name: "Семь Пятниц", address: "Ипподромный пер., 1к2", city: "Санкт-Петербург", district: "Приморский" },
+      { name: "КВАСЬ&ПИВАСЬ", address: "ул. Валерия Гаврилина, 5", city: "Санкт-Петербург", district: "Приморский" },
+      { name: "Live Beer", address: "Плесецкая ул., 20к2", city: "Санкт-Петербург", district: "Приморский" },
+      { name: "Beer Geek", address: "наб. реки Фонтанки, 11", city: "Санкт-Петербург", district: "Центральный" },
+      { name: "Бар Барчик", address: "Гороховая ул., 25", city: "Санкт-Петербург", district: "Центральный" },
+      { name: "Без Вина", address: "Гороховая ул., 27", city: "Санкт-Петербург", district: "Центральный" },
+      { name: "LoveCraft", address: "Большая Конюшенная ул., 9", city: "Санкт-Петербург", district: "Центральный" },
+      { name: "The Feels", address: "пер. Гривцова, 1", city: "Санкт-Петербург", district: "Центральный" },
+      { name: "Бар Островский", address: "Бронницкая ул., 16", city: "Санкт-Петербург", district: "Центральный" },
+      { name: "Магазин Эль Лагер", address: "ТРЦ «Галерея»", city: "Санкт-Петербург", district: "Центральный" },
+      { name: "KIKS", address: "ул. Марата, 56–58", city: "Санкт-Петербург", district: "Центральный" },
+      { name: "Гульбарий", address: "ул. Маяковского, 25", city: "Санкт-Петербург", district: "Центральный" },
+      { name: "Старые Кони", address: "Казанская ул., 29", city: "Санкт-Петербург", district: "Центральный" },
+      { name: "Бар Тёрки", address: "Театральная площадь, 4", city: "Санкт-Петербург", district: "Центральный" },
+      { name: "BeerGrad", address: "Ленинградская ул., 5", city: "Ленинградская область", district: "Кудрово" },
+      { name: "СЁДНЯ МОЖНО", address: "Новая ул., 3", city: "Ленинградская область", district: "Мурино" },
+      { name: "Хмель и Солод", address: "Привокзальная ул., 3/3", city: "Ленинградская область", district: "Мурино" },
+      { name: "Два Ствола", address: "Привокзальная площадь, 3к1", city: "Ленинградская область", district: "Мурино" },
+      { name: "СЁДНЯ МОЖНО", address: "ул. Шекспира, 7", city: "Ленинградская область", district: "Бугры" },
+      { name: "Ontap", address: "Смоленская площадь, 5", city: "Москва", district: "ЦАО" },
+      { name: "IF Bar", address: "Большой Трёхсвятительский пер., 2/1с1", city: "Москва", district: "ЦАО" },
+      { name: "Крафт Репаблик", address: "Малый Гнездниковский пер., 9с7", city: "Москва", district: "ЦАО" },
+      { name: "Share House", address: "Оружейный пер., 3с2", city: "Москва", district: "ЦАО" },
+      { name: "Dogma", address: "Большой Спасоглинищевский пер., 9/1с10", city: "Москва", district: "ЦАО" },
+      { name: "Бар Брод", address: "Страстной б-р, 4с4", city: "Москва", district: "ЦАО" },
+      { name: "Бар «12/1»", address: "Полярная ул., 27к2", city: "Москва", district: "СВАО" },
+      { name: "Биршоп", address: "ул. Грина, 24", city: "Москва", district: "ЮАО" },
+      { name: "Бар «Имею Право»", address: "Чертановская ул., 43к5", city: "Москва", district: "ЮАО" },
+      { name: "69 Pints Pub", address: "пр-т 60-летия Октября, 29к1", city: "Москва", district: "ЮЗАО" },
+      { name: "Бобёр Бар", address: "Октябрьская ул., 26с1", city: "Москва", district: "ЗАО" },
+      { name: "Последний Хмель", address: "Федосьино, 3", city: "Москва", district: "НАО" },
+      { name: "Пиво/Напитки", address: "ул. Свободы, 1", city: "Одинцово", district: "" },
+      { name: "Ельцин Бар", address: "ул. Гаражная, 2–2А", city: "Калининград", district: "" },
+      { name: "Свежего Глоток", address: "ул. Народная, 57", city: "Псков", district: "" },
+      { name: "Бушель", address: "ул. Розважа, 8", city: "Великий Новгород", district: "" },
+      { name: "Бар Волна", address: "ул. Мира, 17", city: "Вологда", district: "" },
+      { name: "Дайте Крафт Бар", address: "ул. Баумана, 25", city: "Казань", district: "" },
+      { name: "Бар «Коммуна»", address: "ул. Розы Люксембург, 34", city: "Екатеринбург", district: "" },
+      { name: "Бар «Игра»", address: "Большая Покровская ул., 51А", city: "Нижний Новгород", district: "" },
+      { name: "Valhalla", address: "ул. Советская, 99", city: "Новосибирск", district: "" },
+      { name: "План ПИ", address: "Всесвятская ул., 33", city: "Киров", district: "" },
+      { name: "Local Pub", address: "ул. Димитрова, 66", city: "Курск", district: "" },
+      { name: "Tartroom", address: "Красноармейский пр., 8", city: "Тула", district: "" }
+    ];
+
+    const citySelect = document.getElementById('city');
+    const districtSelect = document.getElementById('district');
+    const searchInput = document.getElementById('search');
+    const listEl = document.getElementById('list');
+    const countEl = document.getElementById('count');
+
+    const citySet = [...new Set(places.map(p => p.city))].sort();
+    citySet.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c;
+      opt.textContent = c;
+      citySelect.appendChild(opt);
+    });
+
+    function updateDistricts() {
+      const city = citySelect.value;
+      districtSelect.innerHTML = '<option value="">Все районы</option>';
+      let districts = places
+        .filter(p => !city || p.city === city)
+        .map(p => p.district)
+        .filter(d => d && d.trim());
+      districts = [...new Set(districts)].sort();
+      districts.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d;
+        opt.textContent = d;
+        districtSelect.appendChild(opt);
+      });
+    }
+
+    function yandexLink(p) {
+      const q = encodeURIComponent(p.city + ', ' + p.address);
+      return 'https://yandex.ru/maps/?text=' + q;
+    }
+
+    function render() {
+      const q = searchInput.value.toLowerCase().trim();
+      const city = citySelect.value;
+      const district = districtSelect.value;
+
+      const filtered = places.filter(p => {
+        if (city && p.city !== city) return false;
+        if (district && p.district !== district) return false;
+        if (!q) return true;
+        return (
+          p.name.toLowerCase().includes(q) ||
+          p.address.toLowerCase().includes(q) ||
+          (p.district && p.district.toLowerCase().includes(q))
+        );
+      });
+
+      countEl.textContent = 'Найдено: ' + filtered.length;
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = '<div class="empty">Ничего не найдено</div>';
+        return;
+      }
+
+      const groups = {};
+      filtered.forEach(p => {
+        if (!groups[p.city]) groups[p.city] = [];
+        groups[p.city].push(p);
+      });
+
+      let html = '';
+      Object.keys(groups).forEach(cityName => {
+        html += '<div class="group-title">' + cityName + '</div>';
+        groups[cityName].forEach(p => {
+          html += '<div class="card">' +
+            '<div class="name">' + p.name + '</div>' +
+            '<div class="addr">' + p.address + '</div>' +
+            '<div class="meta">' + (p.district || p.city) + '</div>' +
+            '<div class="links"><a href="' + yandexLink(p) + '" target="_blank" rel="noopener">Яндекс.Карты</a></div>' +
+            '</div>';
+        });
+      });
+      listEl.innerHTML = html;
+    }
+
+    searchInput.addEventListener('input', render);
+    citySelect.addEventListener('change', function () {
+      updateDistricts();
+      render();
+    });
+    districtSelect.addEventListener('change', render);
+    updateDistricts();
+    render();
+  </script>
+</body>
+</html>
